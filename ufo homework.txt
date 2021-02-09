@@ -1,0 +1,657 @@
+
+teknisk diary opgave steganography ascii:
+05/02/2021
+17:56= opgave burde være at konvertere en besked ud af biledet https://datsoftlyngby.github.io/soft2021spring/resources/7fe3c3f6-Stego.png ved bruget af ascii.
+Der bliver forklaret at bits er gemt ved pixel 0,0 også 1,0 osv. det mindste bit værdi kommer først, spørgsmålet er hvad er beskeden.
+
+17:59: vil søge til en løsning på at finde frem til beskeden igennem bruget af python3 terminal. Jeg vil starte med at søge i for brede termer, finde nogle svar og disse vil så hjælpe med at indkredse emnet til brugbare løsning. 
+18:00 jeg bevæger min terminal hen til folderen med billedet i med formålet at prøve at køre python commandoer derfra.
+18:04: jeg søger efter "Python steganography image" for at finde nogle generiske eksempler der burde give mig en ide. 
+midt første resultat er et eksempel på https://www.tutorialspoint.com/image-based-steganography-using-python som benytter en python pakke kaldt stepic.
+for at teste dette bibiloetek laver jeg et virtuelt miljø hvor pakken bliver installeret i for at så teste denne pakke på billedet for at se om der skulle være noget resultat. pakken bliver installeret med pip3 install stepic.
+jeg starter så en python3 terminal og opdager dette også kræver at importere pillow hvilket der også blev downloaded af pip3 igennem stepic.
+
+18:10: min fremgangs måde i min python3 terminal for at prøve at pille en besked ud af billedet. det ser dog ikke rigtigt ud som en løsning
+>>> import stepic
+>>> import pillow
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'pillow'
+>>> from PIL import Image
+>>> Image.open("7fe3c3f6-Stego.png")
+<PIL.PngImagePlugin.PngImageFile image mode=RGBA size=120x77 at 0x7F537F0D9DC0>
+>>> image2 = Image.open("7fe3c3f6-Stego.png")
+>>> image2
+<PIL.PngImagePlugin.PngImageFile image mode=RGBA size=120x77 at 0x7F537D88F850>
+>>> stego_message = stepic.decode(image2)
+>>> stego_message
+'7Ró'
+>>>
+
+18:18 min næste tanke er derfor om beskden stadig er i ascii og nu skal omkonvertertes med noget decoding som utf8 for at blive til en potentiel besked.
+derfor går jeg nu igang med at søge "python3 convert ascii to utf-8"  og finder: https://stackoverflow.com/questions/5312011/cannot-convert-ascii-to-utf-8-in-python. da det dov lader til at jeg ikke kan kalde decode() er jeg nok forkert igang med stepic og sørger derfor nu istedet noget andet. 
+
+18:26 jeg søger som næste efter "python3 reading ascii bits out of image" for at søge et andet mere generisk svar. Jeg ændrer derefter om på min søge query igen efter at læse opgaven igen. inden ascii delen skal jeg først finde ud af at få bits af beskeden ud af pixels i billedet. 
+18:32 jeg søger efter "python3 reading ascii bits out of pixels steganography stackoverflow" og synes selv det virker meget bredt og måske ikke kvalitativt nok. 
+18:38 jeg søger istedet efter "steganography python3 read ascii bit message from image" og findet et stackoverflow svar som jeg håber der giver et generelt eksempel jeg kan efterligne for forhåbentligt at få en besked der giver mening: https://stackoverflow.com/questions/44363038/python-steganography-unicodedecode-error
+dette var dog aligevel ikke relateret til billeder og dermed heller ikke særligt brugbar
+
+19:00 "python3 image to binary"
+
+19:11 jeg søger efter "python3 reading bits out of image steganography" og prøver at benytte linket \https://medium.com/swlh/lsb-image-steganography-using-python-2bbbee2c69a2 for at finde en løsning. disse benytter så PIL og numpy hvor numpy ogås skal installeres i virtuel omverden. 
+dette eksempel var dog heller ikke særligt brugbar da det krævede man kendende en string delimter i forvejen hvilket vi dog ikke gør. 
+19:48 jeg føler mig stadig lidt tabt i forhold til at finde en rigtig fremgangs måde. 
+
+20:07 jeg bruger som anden fremgangs måde at søge "python read image until null byte steganography" og ser om artiklen https://null-byte.wonderhowto.com/how-to/steganography-hide-secret-data-inside-image-audio-file-seconds-0180936/ måske kan bruges til noget.
+
+20:12 jeg fandt artiklen https://itnext.io/steganography-101-lsb-introduction-with-python-4c4803e08041?gi=bab15a0f23a8 som forklarer at LSB står for least significant bit, jeg skal ekstrahere rød grøn og blå hvor blå skal varirere en bit for at give en besked.
+
+20:37 jeg fandt endelig en guide som lader at kunne transformere hver pixel til RGB som kan præsenteres ved: https://www.geeksforgeeks.org/image-based-steganography-using-python/ dette har jeg nu sandt ind i en python fil hvor jeg formoder at jeg skal pille den røde og grønne værdi væk så jeg kun læser den blå værdi istedet for at forstå beskeden. 
+
+ved udprintning komme denne løsning også til samme løsning som stepic med '7Ró' så dette må aligevel være korrekte på vejs. indtil videre har jeg samlet og ageret billedet med følgende output:
+pixels 8:  [218, 204, 191, 239, 206, 155, 239, 205]  len:  8
+pixels 8:  [238, 207, 154, 237, 210, 164, 239, 212]  len:  8
+pixels 8:  [239, 211, 169, 237, 210, 168, 235, 211]  len:  8
+'7Ró'
+hvilket er pixels fra billedet sammen med RGB værdier. jeg laver en anden metode med tilgangen modificeret med formålet at jeg kun vil havde fat i den tredje RGB værdi altid, altså den der repræsenterer blå imens jeg lader grøn og rød være. 
+
+de første 8 værdier i RGB er brugt til at gemme binære værdier. dermed får jeg følgende arrays for at repræsentere RGB værdier som så skal over til bits og derfra af vider til ascii?
+pixels 8:  [218, 204, 191, 239, 206, 155, 239, 205]  len:  8
+pixels 8:  [238, 207, 154, 237, 210, 164, 239, 212]  len:  8
+pixels 8:  [239, 211, 169, 237, 210, 168, 235, 211]  len:  8
+'7Ró'
+
+06/02/2021 
+16:06 jeg har tænkt mig at forsætte søgelsen angående LSB resultatet fra igår for at finde hvordan jeg kun kan tage den blå værdi ud af midt python
+program der læser billedet. Den blå værdi må i [218, 204, 191, 239, 206, 155, 239, 205] være 191 og 155. [238, 207, 154, 237, 210, 164, 239, 212] 154 og 164.
+[239, 211, 169, 237, 210, 168, 235, 211] 169 og 168
+16:38 de blå bits må derfor tilsammen være 191, 155, 154, 164, 169 og 168
+16:42 jeg planer nu at søge om hvordan RGB kan konverteres til binary eller til ascii som en besked. Jeg søger efter "python rgb to binary" for at finde generiske eksempler på emnet. "python rgb value to binary" er det næste som jeg søger efter. jeg finder følgende resultat link https://stackoverflow.com/questions/43300046/in-python-how-can-i-convert-a-rgb-array-to-binary-and-get-the-most-significant
+som der forklarer mig en måde at kunne finde en mindst signifikant bit med. 
+
+16:57 jeg prøver at sætte det op med en decode3 metode. som ser følgende måde ud:
+def decode3():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, "r")
+    img_b_blue = image[:, :, 0].ravel()
+    pprint('img_b_blue: ', img_b_blue)
+    img_b_blue_lsb = img_b_blue & 1
+    pprint('img_b_blue_lsb: ', img_b_blue_lsb)
+
+Denne virker dog ikke med min måde på at læse billedet og strejes igen derfor.
+
+17:16: 191, 155, 154, 164, 169 og 168 jeg tager værdierne og prøver med min python terminal at konverte disse ints til binary og derfra videre til characters. 
+>>> f'{191:08b}'
+'10111111'
+>>> f'{155:08b}'
+'10011011'
+>>> f'{154:08b}'
+'10011010'
+>>> f'{164:08b}'
+'10100100'
+>>> f'{169:08b}'
+'10101001'
+>>> f'{168:08b}'
+'10101000'
+
+17:28 den anden ide ville være at vær værdi 191, 155, 154, 164, 169 og 168 kun skal repræsentere 0 eller 1 kun.
+
+så ville det blive til: 011011111 >>> chr(int('011011111', 2))
+'ß' dette ligner et tysk doppel S, hvilket nok ikke kan bruges til noget. 
+
+17:35 jeg prøver nu at benytte vært som så ville retuneres:
+>>> chr(int('011', 2))
+'\x03'
+>>> chr(int('011', 2))
+'\x03'
+>>> chr(int('111', 2))
+'\x07'
+dermed kan man tilsammen få hexiværdierne: '\x03\x03\x07'
+17:37 midt næste mål ville være at søge om disse hexidecimaler potentielt kunne konverteres med ascii til at give mening.
+jeg søger derfor efter "python3 hex values to string" 
+
+18:47 jeg opdagede jeg indexede de blå værdier forkert og får dermed i stedet hex værdien: '\x03\x00\x02'
+bin værdierne er: 11 00 10
+19:10 jeg tænker istedet at søge efter hvad man potentielt ville kunne gøre med sine bits værdier. jeg søger derefter efter søge
+query: "python 3 convert binary to ascii"
+
+19:22 jeg søger efter "python 3 least significant bit steganography" for at få et generisk søg igen
+
+19:26 "python pil image iterate over pixels" og finder et meget gammel svar fra https://stackoverflow.com/questions/1109422/getting-list-of-pixel-values-from-pil
+dette skal man være kritisk overfor men kan stadig bruges
+
+07/02/2021
+15:30 jeg byger ud fra linket fra igår en metode som ser følgende ud: 
+def decode3():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    pixels = list(image.getdata())
+    width, height = image.size
+    pixels = [pixels[i * width:(i + 1) * width] for i in xrange(height)]
+    return pixels
+15:40 bemærkning: svaret er fra gamle dage med python2 og derfor skal xrange ændres til range for at virke. dette giver mig et kæmpe array med RGB værdier:
+udtræk derfra:
+ (141, 152, 163, 255),
+  (142, 152, 162, 255),
+  (142, 150, 160, 255),
+  (140, 149, 160, 255),
+  (136, 146, 155, 255),
+  (138, 146, 156, 255),
+  (131, 139, 150, 255),
+  (122, 130, 142, 255),
+  (120, 128, 142, 255),
+  (121, 128, 140, 255),
+  (124, 130, 140, 255),
+  (125, 133, 144, 255),
+  (126, 134, 146, 255),
+  (127, 135, 145, 255),
+  (23, 33, 50, 255),
+  (26, 32, 46, 255),
+  (32, 39, 51, 255),
+  (70, 79, 87, 255),
+  (15, 20, 29, 255),
+  (0, 0, 0, 255),
+  (53, 63, 78, 255)]]
+  
+15:42 min egen vurdiering er at arrayed at pixels burde repræsentere hver pixel fra billedet. min tanke er derfor af RGB værdierne skal jeg havde den blå værdies "least significant bit". Derfor beslutter jeg igen at google om hvordan man kan få LSB ud af en blå farve i RGB. Min første søge query ide er:
+"RGB blue least significant bit". 
+jeg finder svaret https://stackoverflow.com/questions/5751689/using-logical-bitshift-for-rgb-values/5751820 hvor jeg håber at kunne forstå lidt generelt om emnet.
+
+svaret forklarer meget lære rige ting men som teteriær source da det ikke er kritisk eller analyserer det. Det forklarer følgende:
+RGB har 8 bits for rød, 8 bits for grøn og 8 bits for blå. Disse 3 bytes bliver gemt i en integer. Denne integer har 4 bytes. 
+bits som er least significant for blå: 0-7
+bits som er least significant for grøn: 8-15
+bits som er least significant for rød: 16-23
+
+15:59 jeg forandrede googlingen til "RGB blue least significant bit python stack overflow" siden at svaret fra før ikke kom længere end denne forklaring. 
+jeg finder samme svar igen: https://stackoverflow.com/questions/43300046/in-python-how-can-i-convert-a-rgb-array-to-binary-and-get-the-most-significant og tænker at prøve at benytte dette igen. jeg konkluderer at jeg kan itere hvert pixels RGB værdier igennem ved bruget af terminalen:
+>>> img = "7fe3c3f6-Stego.PNG"
+>>> image = Image.open(img, 'r')
+s = list(image.getdata())
+width, height = image.size
+pixels = [p>>> pixels = list(image.getdata())
+ * width:(i + 1) * width] for i in range(height)]>>> width, height = image.size
+>>> pixels = [pixels[i * width:(i + 1) * width] for i in range(height)]
+
+>>> for pixelarr in pixels:
+...     for pixel_rgb in pixelarr:
+...             print(pixel_rgb)
+...             break
+...     break
+...
+(218, 204, 191, 255)
+
+dermed tænker jeg at kunne sammle alle blå værdier ud af billedet også benytte "img_b_blue_bin = map(bin, img_b_blue)" fra svaret for at få alle blå¨værdier i binære værdier først. 
+
+16:24 jeg omændrede eksempel fra terminal til:
+>>> for pixelarr in pixels:
+...     for pixel_rgb in pixelarr:
+...             for index, color in enumerate(pixel_rgb):
+...                     print(index)
+...                     print(color)
+...             break
+...     break
+...
+0
+218
+1
+204
+2
+191
+3
+255
+
+dette skulle hjælpe mig med at få den blå farve som er index 2 fra hvert eneste pixel.
+
+16:43 jeg søger efter "python bitwise operators least significant bit" men det andet svar er stadig tæt på, jeg kan dog ikke bruge den bitwise operator dog på min liste eller ints. 
+16:55 den bitwise operator & 1 opfører sig om N % 2 != 0. Opgaven siger "The image is manipulated in such a manner that the least significant bit of the blue values is substituted with a bit from the message." Jeg har nu LSB fra hver pixels blå værdi igennem følgende opsatte metode:
+
+def decode3():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    pixels = list(image.getdata())
+    width, height = image.size
+    pixels = [pixels[i * width:(i + 1) * width] for i in range(height)]
+    blue_pixels_only = []
+    for pixelarr in pixels:
+        for pixel_rgb in pixelarr:
+            for index, color in enumerate(pixel_rgb):
+                if index != 2:
+                    continue
+                lsb_blue = color & 1
+                blue_pixels_only.append(lsb_blue)
+
+17:08 beskrivelsen siger som følgende "It is an ascii message, and the bits of the message are stored starting in pixel" jeg har nu disse bits i midt array repræsenteret på følgende måde: 
+ 0,
+ 1,
+ 0,
+ 1,
+ 0,
+ 0,
+ 0,
+ 1,
+ 1,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 1,
+ 0,
+ 1,
+ 1,
+ 0,
+ 1,
+ 0,
+ 1,
+ 1,
+ 1,
+ 1,
+ 1,
+ 0,
+ 0,
+ 1,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 1,
+ 1,
+ 1,
+ 1,
+ 1,
+ 0,
+ 1,
+ 1,
+ 0,
+ 0,
+ 1,
+ 0,
+ 0,
+ 0,
+ 1,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 0,
+ 1,
+ 0,
+ 0,
+ 1,
+ 1,
+ 1,
+ 0,
+ 0]
+
+disse repræsentere alle pixels blå værdies least significant bit. Nu er spørgsmålet om arrayed kan konvertes til ascii. 
+17:13 jeg vil søge "python3 binary to ascii" for at få mine least significant bits fra de blå værdier forhåbentligt konverteret til en besked.
+
+17:18 array ændres istedet til char for at beholde lSB værdierne. følgende link prøves at benytte: https://stackoverflow.com/questions/37590412/converting-binary-to-ascii-and-ascii-to-binary
+med formålet at benytte:
+def toString(binaryString):
+    return "".join([chr(int(binaryString[i:i+8],2)) for i in range(0,len(binaryString),8)])
+
+17:24 i forhold til characters skulle koden også opdateres så værdierne repræsenteres som:
+'110000101111011001110110111001100100111010000110001011101010111000110110100001100010111010010110111101100111011011001110001101000000010000101110000101101001011011001110000001001001011011001110000001000010111000010110101001100000010011001110101001101100011001001110101001100010111000000100101101101010011011001110110011101000011011100110101001100000010011110110011001100000010000101110000101101010011000000100101010100110001011110010000001001100011000110110100001101100111011001110100001000000010000010100011101101111011000110100000001000111011011110110001011100000010000101100010011001001010000000000010000000001010010000110100000100111101110111101111001011100110011100001000010111001001100101111101000011000000011101001010010100011001000001000111011001100101000001100110111111010000010010001001011101001111100001100011011110000010100101101110101011100100110000011010111000110110010001011010010101100000011001111100110001111111011000001100110011000110110110111010111000000000110000110100001110001001010001100000111101100011011111010110100100011001010101100001001111011100111100101100001011110101010001000110100000110001100010000000011011111100001010001011110001110000111111110000011100000010000110101010010100101011010001000010010110111101111000010011011001101111010101100000001001001000000101000111001011010101001010010000111111011010001000011001110010110001100001001001010110001101011000001001010000101110001010011111111101100001001101001100001111110101100000001001110010100111010110001001001110001110001100010110101111111101111000100111001000101001110100000100101010101100110001000111100001110101110100100000011100001011111111100110010000001010110100010111000101010111100101011100010100110110000001000100100111110110110100110001000110111010111010101011010100100000110100011010010101111101000101111010001100100101100000111010000010100100101111111011010110111001100001111000111011000000101101010110011110000000010000000000001001011001011000111100010101010010010000010100010000110011001100100011100110001100110111000111111111000010101010110110001010000100110001011011110000000010110000000111010100110111111111011000010101101011010110000110010100000111001101000000000000000000000000010100100100101011010111000101111011000100000000011000100110110100011010110100100011101101110011000011011001001111100011100110110010001000101001110110111101000110011001101001100110001011011111110100100001001000001000010101000101101001100000011101110000000001111101010110111110000110111111010111011111001111111101100100001101110011101101100011001000111011000110001001011011001100111000010011011011111111001000100111001110111001111011000000111101011010011111101011100001011110100100110110011010101011110001110110101000001110110001110000010010110111011111111110110100111111001011000111100011100000111111111000100001010001010000111101000010101110011011011101110100000001001100000101011100000010100000111111011001111001110011001001100011011110111110010010111100100010011001100001111110000100110011110010001101010010100101001110001110011010110011011001011011100001000111000110110000001110000010101100100101101011011010010100100000111100110111100000011011000110010011111111111101101101001100000110110010111111011101010100111110010000011110001101101000100010100001111111010010000001000101110110000111010100101000111001110000101011011010010111110010000101100010001001011001001110000001011100111011000111111111101101010110111000010010100000100101010001011110000000100111111110100000011101000000001101101110010110101111000110110111000101011011111111101001101100001110110110010100000101000011011011100110110110001000010000000111111010000000000000000001111000000111001110010110000000110110010010010110111101001000111001101101001101101111110111101001110101111001111110100000011100110010100110010011011100011000110000000001011001011000101010010100101111111010010101011001101100111100111010111100111100111010000100110011001100110000000100111000101111000001011111110010010000100110110110101010001010100101100000001010000110101100010000010111101101000010100111111110001001011111100000000000111001000101110000001011110010101010100010010001101100010100010010101111111111010111100110101010000010000100110110111010001010011110000000001110010010011010110100111010111110001101010011011001000010000111001010110011010010010111110110111010011000001111001001001011100110101010000000001011111111001001100011100111111000000000101110100011101001111011100010101110111011100010001010111101010100111001000101101000010010111100100111110101010101000010111001010000101000110111100000011100110001001110110011011110101000011000011011111000011001011110100011111001000110000101000101110101000101100100111101110100001011010011011100110101101101111101000101100111101111011010001011100010101001110010001100101001011011001100011101110100110000111100011100000101010101001001111010001010110010001001111110001001010010111111000110100011101011100011010111110000001000000111001110111111011000000100001000010111101100011010011000101101010001011011100010011001111110000010010001110000100000111010011011000011010110001001011101111001110110011000100010011100101011000111000011000110110001001110110110110000001010111000011101011100110101010010001010010110100111101111001000000000010100110000111110011111011101100100001110001101010000110001001010100110010111001101001000011101010010100111111100010100000010100110111001110001100000000000001100001110000001001000111011000110100110010110001101010100101011111001110101001110011100101110010100100100010011001011110001001001010011000011000110011001000100100000100111101100111100110110100010100000111010110010101011011001101011000111011101001100001001001001100111100000010100100101001101000110011111111101100001100101100100110111101001000010000111101110111111000101100001001001100000111010000110001100000110011011000010011010001000111110111000000100000010011110001001101111010000101100000001101011011011001100111001111111000101100101001101001010000100110010011100110111111001001110100111110100011001010001100010110000110100111011000100101111110101010100010010110000010100100001110111011001010001011000000001011100010101100000010011111101001000111111100100001110010010100001010000111000000100111010111011010110001100001100111000111011010111001110110000011010011000101010101110100011010100001110010011111111100001011111000000111011111000010010100111111111110100001101010110001110011101010101000111110100100000010101111001000100001001010010000000001101000101000101000101100010111011101001011010100011101011000011110011000010011101001110001101001101001110010111110010011001111110000110110010000100110111011011111111010011001000011001000110100111111010001111000101000101111100001010011000111101001100110110001010011001110110000010101001110000000100111011010111100110100000111011101010111111101011100001111111011011001111000011000100110000101111010001001010111101001000110000001100100100001011100010000011000110001100000001111001001000100000010010101001100000001011111010001000000001101011010011010000010101010001001111000000010111001101011100000000000010110010010111011010010100110000110000011011001010110001000001101111001010100001011000000111000101111101010001101010110011111000010101000010100001011000001000001001001010110100011101110000000111011100000110010010001111101110010110011100111010001010001011001010100101111011000110010010110001111001111111100111011001010111100010010011010101000010010101111011000101111001001000100100000101000101100111111001010000000111010100111000100100011011000010101000111011111110110111100011000001010101000101101110111110101001111011010000110010111111100010101001010011010101110110010001101000001100101111101100011110001001110101010010001011110110110000110110101011100110001001001100011100011110010100101111101011010001010111010110010100100101001010111111000111110110011011011010001100010001011010101100100001010011000111110011010101101101011111001110111100000101001110111111011000101111110101101011001101111100101110010001101000010011011000110000100000010010000111110010011110010101011001111010000010110111101010001110101011100010001000111000000100001011110011010001001111110011110010110000001110001001101110011101001111101110001010000111011001011011000001001001000101110111110100000011110010101001011001011100111010100001101011010100000001000000110101111000111010000011111100000011101101001000001001000101000001100110111000100101101001010001100101101110101010000100010100111111101110111011100110101010010010101011000001101011011110000000000110111000001010110100101111001000011011100111101000100010011111000010010011111111111000111110000011111011101000001011100011101001110110001110100000001011010010110110011001011000100100010010111111110100101101010100000101011010010110000100001001000010111101010110100000111010000101000110100001011000111011001000000011001011101100110001110001110111011100000111000010011111110001001001011111100010010111110100001011011000011001110000100000101000101101000101000111001111110001001111100101000101011110001001100111001101010101011110111100101000110001111001110110101100000010011010100001110110010100011001100000000010010001100101111010000011011011111001100001000000110101110110100110001101000111100110010110111000001111100100111000101010100011000000000000101101011111001000001111101100100010000000010011100'
+
+17:47 jeg har stadig ikke held med hvordan den binære værdi ville kunne blive pillet ud. jeg prøver derfor en simpel guide fra: https://www.tutorialspoint.com/python_text_processing/python_conversion_binary_ascii.htm for at se nogle eksempler som måske ville være brugbar.
+
+17:54 dette eksempel var meget kort og ladder ikke til at være brugbar for mig siden jeg får fejl beskeder som potentielt kunne løses ved at google "binascii.Error: Trailing garbage". 
+
+18:00 ved søget efter fejlen kom jeg over følgende: https://stackoverflow.com/questions/64806330/converts-strings-of-binary-to-binary
+svaret derfra bruger ikke binascii og virker meget interesant som fremgangs måde jeg gerne ville prøve selv. Det vigtige er at huske fra svaret at en byte skal havde sine 8 bits. Dette svar virkede også meget interesant men fremgangs måden med at devidere dem i 8 bits fik mig kun frem til:
+'\x03\x00\x02'
+('ÂövæN\x86.®6\x86.\x96övÎ4\x04.\x16\x96Î\x04\x96Î\x04.\x16¦\x04Î¦ÆN¦.\x04¶¦ÎÎ\x86æ¦\x04öf\x04.\x16¦\x04ªbò\x04Æ6\x86ÎÎ\x84\x04\x14vö4\x04vö.\x04,L\x94\x00@\x14\x86\x82{½åÌá\x0b'
+ '\x93/¡\x80éJ2\x08ìÊ\x0c'
+ 'ß\xa0\x91.\x9f\x0c'
+ 'o\x05-ÕÉ\x83\\l\x8bJÀÏ\x98þÁ\x99\x8d·\\\x01\x86\x87\x12\x8c\x1e'
+ "ÆúÒ2¬'¹å\x85"
+ 'ê\x88Ðc\x10\r'
+ 'øQxáþ\x0e\x045JV\x88K{ÂlÞ¬\x04\x90(åªR\x1f´C9c\t'
+ "+\x1aÁ(\\SþÂi\x87ë\x019N±'\x1c"
+ 'b×ûÄäS\xa0'
+ '\x95Y\x88ðë¤\x0e\x17üÈ\x15¢â¯+\x8al\x08\x93í¦#uÕjA£Jú/FK\x07AI\x7fks\x0f\x1d'
+ '\x81jÏ\x00\x80\x04²Ç\x8a¤\x82\x88fds\x19¸ÿ\x85'
+ 'VÅ\t\x8bx\x05\x80êoû\n'
+ 'Ö°Ê\x0eh\x00\x00\x02\x92V¸½\x88\x03\x13hÖ\x91Û\x98l\x9f\x1c'
+ 'Ù\x11NÞ\x8cÍ3\x16þ\x90\x90B¢Ó\x03¸\x03êß\r'
+ 'úï\x9fì\x86çldv1-\x99ÂmþDçsØ\x1e'
+ '´ýp½&ÍW\x8eÔ\x1d'
+ '\x8e\tnÿÚ~XñÁÿ\x10¢\x87¡\\Ûº\x02`®\x05\x07ìó\x991½ò^DÌ?\t'
+ '\x9eF¥)Ç5\x9b-Â8Ø\x1c'
+ '\x15\x92ÖÒ\x90y¼\r'
+ '\x8c\x9fþÚ`Ù~ê\x9f ñ´E\x0fé\x02.Ã©G8VÒù\x0b'
+ '\x11,\x9c\x0b'
+ '\x9d\x8fý«p\x94\x12¢ð\x13ý\x03\xa0\x1br×\x8d¸\xadÿM\x87l\xa0¡·6Ä '
+ '?@\x00\x0f\x03\x9c°\x1b$·¤si·ïN¼ý\x03\x99L\x9b\x8c`\x0b'
+ ',T¥ý*Í\x9euç\x9d\t\x99\x98\tÅà¿\x92\x13mQRÀPÖ '
+ '½¡Oñ/À\x07"à^UD\x8d\x8a%\x7fëÍPBmÑO\x00rMi×Æ¦ÈC\x95\x9aKíÓ\x07\x92\\Õ\x00_äÇ?\x00]\x1d'
+ '=Åwq\x15ê\x9c\x8bB^Oª¡r\x85'
+ "\x1bÀæ'fõ\x0c"
+ '7Ã/GÈÂ\x8b¨²{¡i¹\xad¾\x8b=í\x17\x159\x19Kf;¦\x1e'
+ '8*¤ôVDüJ_\x8d\x1d'
+ 'q¯\x81\x03\x9dû\x02\x10½\x8d1j-ÄÏÁ#\x84\x1d'
+ "6\x1aÄ»ÎÌDåc\x866'm\x81\\:æ©\x14´÷\x90\x02\x98|û²\x1c"
+ 'j\x18\x952æ\x90êSø\xa0'
+ 'Ss\x8c\x00\x18p$v4Ë\x1a¥|ês\x97)"eâJa\x8cÈ\x90Og\x9bE\x07YVÍcºa$Ï\x02\x92\x9a3þÃ,\x9bÒ\x10÷~,$ÁÐÆ\x0c'
+ 'ØM\x11÷\x02\x04ñ7¡`5¶g?\x8b)¥\t'
+ '\x93\x9bòtú2\x8cXiØ\x97ê¢X)\x0eì¢À.+\x02~\x91ü\x87%\n'
+ '\x1c'
+ '\t×k\x18g\x1d'
+ '®v\r'
+ '1UÑ¨r\x7fÂø\x1d'
+ 'ð\x94ÿèjÇ:¨ú@¯"\x12\x90\x06\x8a(±wKQÖ\x1e'
+ 'a:q¦\x9c¾Lü6Bnßé\x90ÈÓôx¢øS\x1e'
+ '\x99±Lì\x158\t'
+ 'ÚóAÝ_×\x0fí\x9e\x18\x98^\x89^\x91\x81\x92\x17\x10c\x18\x0f$@\x950\x17Ñ\x00Ö\x9a\n'
+ '¢x\x0b'
+ '\x9aà\x01d»Ja\x83eb\r'
+ 'åBÀâú\x8dYð¨P°A%hî\x03¸2GÜ³\x9d\x14YRö2Xóüì¯\x12j\x84¯bòD\x82\x8b?(\x0e§\x126\x15\x1d'
+ 'ý¼`ª-ßSÚ\x19\x7f\x15)«²4\x19}\x8f\x13ªEí\x86ÕÌI\x8e<¥õ¢ºÊJWãìÛF"Õ\x90¦>jÚùÞ\n'
+ 'wì_\xadfùr4&Æ\x10$>O*ÏAoQÕÄG\x02\x17\x9a\'ç\x96\x07\x13s§ÜPì¶\t"ï\xa0'
+ 'yRË\x9dCZ\x80\x81¯\x1d'
+ '\x07àv\x90H\xa0ÍÄ´£-Õ\x08§÷w5IV\r'
+ 'o\x007\x05iy\r'
+ 'ÏDO\x84\x9fü|\x1ft\x17\x1d'
+ ';\x1d'
+ '\x01ilË\x12%þ\x96¨+K\x08H^\xad\x07B\x8d\x0b'
+ '\x1d'
+ '\x90\x19vc\x8eî\x0e\x13ø\x92üKè[\x0c'
+ 'á\x05\x16\x8a9ø\x9f(¯\x139ª½å\x18óµ\x815\x0eÊ3\x00HËÐmó\x08\x1aí1£Ì·\x07ÉÅQ\x80\x05¯\x90}\x91\x00\x9c')
+
+hvilket der på ingen måde viser beskeden. 
+
+18:15 jeg vil dog istedet prøve potentielt at rette min metods. jeg tænker fremgangsmåden fra linket virker ret rigtigt og bruget af 8 bits for en byte og chr og int konverteringen har jeg set i mange eksempler. Derfor burde jeg prøve en decode4 metode. Da jeg tror den sidste del er korrekte vil jeg prøve at google den først del igen med: "python3 PIL iterate image pixels"
+
+18:20 jeg findet et eksempel fra https://predictivehacks.com/iterate-over-image-pixels/ 
+
+18:25 Ud fra denne artikel lærer jeg om PIL at man kan bruge image.getpixel((0,0)) for at specifere hvilken pixels man gerne vil tilgå. opgave beskrivelsen sagde også: "It is an ascii message, and the bits of the message are stored starting in pixel (0,0), next in (1,0) etc" så istedet for hver pixel potentielt skal måske ikke alle itereres? 
+
+18:26 ud fra terminalen kan ejg sigde følgende om billedet: 
+>>> image.height
+77
+>>> image.width
+120
+
+billedet har på disse 77X120 pixels tilsammen 9240 RGB kombinationer hvor den trejde værdi altid er blå. 
+
+
+18:42 jeg er ved at løbe tør for strøm i toget. jeg burde nok ikke at iterate hver pixel men istedet kun højde eller længden hen af siden. 
+
+18:53 jeg bliver nød til at google "getpixel() takes 2 positional arguments but 3 were given" da dette virker noget mystisk med bare en højde og længde værdi at fejle. 
+18:57 jeg konkluderer at metoden kræver (()) alså doppel paranteser for at fungere. Så jeg skal sætte mine pixels i tupels vel.
+
+20:57 jeg er kommet hjem og har følgende metode som jeg prøvede: 
+def tyler_approach(blue_pixels):
+    bin_list = []
+    for i in range(0, len(blue_pixels), 8): # 8 bits in a byte!
+        bin_list.append(blue_pixels[i:i+8])
+    message = ""
+    for binary_value in bin_list:
+        binary_integer = int(binary_value, 2) # Convert the binary value to base2
+        ascii_character = chr(binary_integer) # Convert integer to ascii value
+        message += ascii_character
+    return message
+
+def decode4():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    #pixels = list(image.getdata())
+    first_blue_pixels_only = ''
+    for pixel_heigt in range(image.height):
+        rgb_of_pixel = image.getpixel((pixel_heigt, 0))
+        for index, color in enumerate(rgb_of_pixel):
+            if index == 2:
+                color = color & 1
+                first_blue_pixels_only += str(color)
+    print(first_blue_pixels_only)
+    return tyler_approach(first_blue_pixels_only)
+	
+udprintet er følgende: 
+11000010111101100111011011100110010011101000011000101110101011100011011010000
+'ÂövæN\x86.®6\x10'
+
+denne message lader også til at være forkert hvor jeg så må konkludere at enten er min linje af 1-0 for langt stadig i forhold til målet eller jeg konverterer dette forkert. Jeg tænker dog jeg bare har det forkerte antal af binære værdier. 
+
+
+08/02/2021 
+12:36 sider i tog mod studie job efter undervisning blev udtrukket 10-15 minuter.  Siden jeg stadig tror at min char '11000010111101100111011011100110010011101000011000101110101011100011011010000' nok stadig burde være korrekt vil jeg google igen med håbet om at kunne transfere disse binaries om til ascii værdier potentielt.
+12:39 jeg søger efter "python3 byte strings stackoverflow" som der for mig til at tænke at disse 0 og 1 ikke skal være string bits men bare bytes måske?
+12:41 jeg konkluderer jeg skal istedet søge efter "python3 bit strings" og derefter "python3 bits strings to ascii" som igen fører mig til svaret https://stackoverflow.com/questions/7396849/convert-binary-to-ascii-and-vice-versa som jeg allerede før så. jeg prøver dog nu af implementere metoderne derfra: 
+def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
+    n = int(bits, 2)
+    return int2bytes(n).decode(encoding, errors)
+
+def int2bytes(i):
+    hex_string = '%x' % i
+    n = len(hex_string)
+    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
+	
+	dette støder dog på fejl beskeden UnicodeDecodeError: 'utf-8' codec can't decode byte 0xce in position 2: invalid continuation byte
+	
+
+17:13 sider i toget. Jeg tænker at ville skifte strategi en smule. jeg søger istedet "python3 list bits to ascii message"
+17:28 jeg fandt frem til linket https://stackoverflow.com/questions/10237926/convert-string-to-list-of-bits-and-viceversa jeg prøver i forhold til dette at ændre bits om fra string til en liste af bits som så skal itereres igennem metoden 
+def frombits(bits):
+    chars = []
+    for b in range(len(bits) / 8):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
+
+jeg er dog skeptisk om jeg stadig skal forholde mig til 8 bits for en byte eller om det er dette jeg glemte i andre tilfælde. 
+17:36 jeg ændrede koden om og skal google efter pythons range trejde parameter da /8 ikke gælder som lovlig syntaks åbenbart. trejde parameter er step.
+så den er brugbar ved at ændre det til (len(bits), 8): jeg ændrede dette dog tilbage igen og synes jeg stadig er på forkerte vej.
+
+17:49 aktuelt tror jeg at frombits metoden jeg fandt er ret rigtig så jeg må nok havde et array med forkerte bits værdier i sig istedet.
+def frombits(bits):
+    chars = []
+    intbits = int(len(bits)/ 8)
+    for b in range(intbits):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
+
+19:32 jeg tænker stadig metoden er god da den kan tage imod inputtet lige meget om fra et array af ints eller chars eller om det er en lang string så giver den altid det samme resultat tilbage da indholdet af binære værdier stadig altid er den samme. Ud fra dette burde man konkludere at pakningen af data ikke er afhængig og at moden burde være sikret hvilket må betyde at det kritiske spørgsmål nu burde være om den korrekte forståelse af "least significant bit" fra hver blå pixel på billedet. Et andet spørgsmål er om det overhovedet skal være for hver pixel eller kun (1,0) (2,0) osv 
+
+19:46 jeg har igen reflekteret på min decode4 metode og besluttede mig igen for at prøve at iterrere hver pixel af længde og højde igen. metoden er bleven opdateret til at se som følgende ud:
+def decode4():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    #pixels = list(image.getdata())
+    blue_pixels_array = []
+    for pixel_heigt in range(image.height):
+        for pixel_width in range(image.width):
+            rgb_of_pixel = image.getpixel((pixel_heigt, pixel_width))
+            for index, color in enumerate(rgb_of_pixel):
+                if index == 2:
+                    color = color & 1
+                    blue_pixels_array.append(color)
+
+    #print(first_blue_pixels_only)
+    print(blue_pixels_array)
+    #return bits2string(bin(int(first_blue_pixels_only)))
+    return frombits(blue_pixels_array)
+
+19:49 jeg får en IndexError: image index out of range fejl hvilket så må være i forhold til at billedet er 77x120 og den dermed går ud over siden åbenbart.
+
+19:54 jeg laver en ny metode og kører en python3 terminal for at prøve. som nænvt før har billedet tilsammen vel 9240 pixels. 
+>>> len(pixels)
+9240
+>>> 9240 / 8
+1155.0
+>>> 9240 % 8
+0
+>>>
+dermed kan ses at det går op i 8 hvilket var 8 bits per byte. 
+
+20:22 resulatet fra før var ikke succesfulld og jeg tænker jeg skal søge efter "The message is terminated with a null byte." og finde ud af om jeg kan stoppe at iterere hvis jeg kan finde en null byte undervejs.
+\x01ilË\x12%þ\x96¨+K\x08H^\xad\x07B\x8d\x0b'
+ '\x1d'
+ '\x90\x19vc\x8eî\x0e\x13ø\x92üKè[\x0c'
+ 'á\x05\x16\x8a9ø\x9f(¯\x139ª½å\x18óµ\x815\x0eÊ3\x00HËÐmó\x08\x1aí1£Ì·\x07ÉÅQ\x80\x05¯\x90}\x91\x00\x9c')
+ 
+ resulatet var en meget leng form af hexidecimaler som ikke burde være brugbare.
+ 20:23 jeg søger dog først om den lange hexidecimal kunne konverteres med ascii til læslig tekst.
+ jeg søger ""
+
+20:41 jeg har prøvet masser af ting men erkendte først at hexidecimal ikke kan konverteres med ascii vel og som næste prøved ejeg at søge efter null byte hvilket jeg søger med:
+def frombits(bits):
+    chars = []
+    intbits = int(len(bits)/ 8)
+    for b in range(intbits):
+        byte = bits[b*8:(b+1)*8]
+        char_value = chr(int(''.join([str(bit) for bit in byte]), 2))
+        #print(char_value)
+        if char_value == '\x00':
+            print('reached break')
+            break
+        #chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+        chars.append(char_value)
+    return ''.join(chars)
+	
+23:00 jeg søger efter "python packed hex to string" og finder https://stackoverflow.com/questions/32401977/python-pack-string-as-ascii-hex-value
+
+
+09/02/2021
+
+16:01 jeg fik idag snakket med tobias om opgaven og kunne få nået hjælp af ham til at forstå det fremad rettet. jeg starter en python terminal for at verifiere at billedet længde gange højde tilsvarer anstallet af pixels, altså RGB kombinationer. 
+
+16:13 jeg bruge terminalen for at evaluere om der er forskel på at iterate højde og lændge kordinater eller om det er samme rækefølge som at iterate pixels. 
+for RGB in pixels:
+        for index, color in enumerate(RGB):
+            if index != 2:
+                continue
+			blue_pixels_array += str(color & 1)
+imod
+for pixel_height in range(image.height):
+        for pixel_width in range(image.width):
+            pixel_rgb = image.getpixel((pixel_heigt, pixel_width))
+            for index, color in enumerate(pixel_rgb):
+                if index == 2:
+                    blue_pixels_array += str(color & 1)
+
+Dette ville jeg teste ved brug af terminalen for at se om de har samme rækkefølge:
+>>> pixels[0]
+(218, 204, 191, 255)
+>>> pixels[0][2]
+191
+
+>>> range(image.height)
+range(0, 77)
+>>> range(image.width)
+range(0, 120)
+>>> image.getpixel((0, 0))
+(218, 204, 191, 255)
+>>> image.getpixel((0, 0))[2]
+191
+
+dermed kan man konkludere at begge fremgangs måder starter samme sted. og burde føre til samme resultat lige meget af iterate rækkefølgen. 
+
+
+
+16:30 det som jeg lærte af min snak med tobias var at jeg nok skulle søge de binære 00000 og se dem som null byte istedet for \x00
+. ud fra dette tænker jeg i stedet for at sætte alle blå værdier sammen skal jeg iterate dem og løbende finde en nullbyte som '00000000'
+imens dette iterates skal jeg også stadig tag højde for 8 bits på en byte. Jeg har dog stadig tænkt ret forkert på hvordan dette måske skulle gøres.
+
+16:56 min lsb værdi burde hver gang den når 8 bits blive resetes igen og så burde denne sidste bit at appended til den aktuelle besked. og stadig med den samme fremgamgs måde af chr(int(()).
+
+17:16 dermed ser min kode som følgende ud: 
+def decode5():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    pixels = list(image.getdata())
+    lsb_blue_char = ''
+    lsb_message = ''
+    for RGB in pixels:
+        for index, color in enumerate(RGB):
+            if index != 2:
+                continue
+            lsb_blue_char += str(color & 1)
+        if lsb_blue_char == '00000000':
+            return lsb_message
+        if len(lsb_blue_char) == 8:
+            lsb_message += chr(int(lsb_blue_char, 2))
+    return lsb_message
+	
+svaret er dog stadig ikke korrekte da den lader til at returne alt for tidligt.
+17:21 jeg glemte at resete lsb_blue_char i forløbet.
+dette giver nu ÂövæN.®6.övÎ4.ÎÎ.¦Î¦ÆN¦.¶¦ÎÎæ¦öf.¦ªbòÆ6ÎÎ
+                                                     vö4vö.,L
+som stadig ikke er brugbar.
+
+17:29 binær værdierne jeg fær tilbage kan printes på følgende måde som:
+0
+00
+000
+0000
+00000
+000000
+0000000
+
+hvilket der lader til at være sidste iteration før min return ved nullbyte.
+
+
+
+18:01 jeg har opdateret midt for løkke til følgende:
+for pixel_height in range(image.height):
+        for pixel_width in range(image.width):
+            rgba_pixel = image.getpixel((pixel_width, pixel_height))
+            lsb_blue_char += str(rgba_pixel[2] & 1)
+            if lsb_blue_char == '00000000':
+                print('reached return: ')
+                return lsb_message
+            #print(lsb_blue_char)
+            if len(lsb_blue_char) == 8:
+                lsb_message += chr(int(lsb_blue_char, 2))
+                lsb_blue_char = ''
+
+dermed får jeg: ÂövæN.®6.övÎ4.ÎÎ.¦Î¦ÆN¦.¶¦ÎÎæ¦öf.¦ªbòÆ6ÎÎ
+                                                     vö4vö.,L
+													 
+18:17 jeg ændrede 
+lsb_blue_char += str(rgba_pixel[2] & 1) 
+om til
+lsb_blue_char = str(rgba_pixel[2] & 1) + lsb_blue_char		
+
+og dermed får jeg endelig følgende output: 	pixel_height:  0
+pixel_height:  1
+pixel_height:  2
+pixel_height:  3
+pixel_height:  4
+reached return:
+Congratulations, this is the secret message of the UFO class! (no, not 42)
+
+min metode ser i sidste ende komplet sådan her ud:
+def decode5():
+    img = "7fe3c3f6-Stego.PNG"
+    image = Image.open(img, 'r')
+    pixels = list(image.getdata())
+    lsb_blue_char = ''
+    lsb_message = ''
+    for pixel_height in range(image.height):
+        print('pixel_height: ', pixel_height)
+        for pixel_width in range(image.width):
+            rgba_pixel = image.getpixel((pixel_width, pixel_height))
+            lsb_blue_char = str(rgba_pixel[2] & 1) + lsb_blue_char
+            if lsb_blue_char == '00000000':
+                print('reached return: ')
+                return lsb_message
+            #print(lsb_blue_char)
+            if len(lsb_blue_char) == 8:
+                lsb_message += chr(int(lsb_blue_char, 2))
+                lsb_blue_char = ''
+	return lsb_message
+	
