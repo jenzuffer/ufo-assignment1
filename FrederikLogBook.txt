@@ -1,0 +1,93 @@
+Log book for UFO-image decoding assignment.
+	Assignment part 1: Decode a message hidden in an image - this is the given example: https://datsoftlyngby.github.io/soft2021spring/resources/7fe3c3f6-Stego.png
+	Assignment part 2: Keep a log book detailing the steps taken to decode it, including exploration.
+	
+	The assignment in full is on this page at section 1.5: https://datsoftlyngby.github.io/soft2021spring/UFO/week-05/#1-introduction-to-exploration-and-presentation
+	
+Initial thoughts:
+	I decided to work with Christian because he seemed capable when I worked with him during lessons. He already had a solution using python by the time we formed a group,
+	so I decided to nonetheless try to solve the assignment on my own as to not invalidate the learning opportunity. 
+	To do this I decided to use the Python Fast Track for Beginners guide and if feeling stuck I would ask Christian or look at his log book.
+
+10-02-2021:
+	Anaconda setup:
+		10-02-2021 ~13:30 I tried to install Anaconda to the D drive, yet when running the guide's tests, most would fail. I decided to uninstall and install again on the C Drive.
+		10-02-2021 ~14:30 After installing again on the C drive and using the Anaconda navigator to access the Anaconda prompt (CMD.exe Prompt) - the guide's tests finally worked.
+		
+	Investigating Steganography:
+		10-02-2021 16:30
+		Search term: steganography python
+		Result clicked: https://www.geeksforgeeks.org/image-based-steganography-using-python/
+		
+	Attempting Steganography sample code:
+		10-02-2021 16:30 GeeksForGeeks code tested and decoded to a word: 7Ró
+			This doesn't seem right. Will reflect on why I got that result.
+		10-02-2021 16:35 https://onlineutf8tools.com/convert-ascii-to-utf8
+			7Ró doesn't seem to be immediately convertible to ASCII.
+			
+	Investigating Steganography with other terms included:
+		10-02-2021 16:43 Search term: "python image steganography little-endian"
+		Result clicked: https://pequalsnp-team.github.io/cheatsheet/steganography-101 - quickly skimmed, did not seem useful.
+		Result clicked: https://itnext.io/steganography-101-lsb-introduction-with-python-4c4803e08041 - explained that LSB means Least Significant Bit.
+	
+Summary of 10-02:
+	At this point I felt stuck and rather than ask for help, I decided to try again the next day with a cooler head. I had got the Python environment up and running and
+	experimented with importing libraries and reading sample Python code both related and unrelated to the assignment. I had learned a bit about steganography, but my
+	mind wasn't quite conditioned to be ready to take in so much information late in the day because I had a period of unemployment, where I wasn't challenged to 
+	maintain discipline.
+	
+11-02-2021:
+	Investigating the string received by the GeeksForGeeks Python code sample:
+		11-02-2021 10:15 Search Term: "String to Byte converter online".
+		Result clicked: https://onlinestringtools.com/convert-string-to-bytes
+		Inputting 7Ró as my string, I got the bytes: 37 52 c3 b3. Didn't make sense to me.
+		
+		Trying https://onlinestringtools.com/convert-string-to-binary at 10:20 I got 00110111 01010010 11000011 10110011 which would just convert back to 7Ró, I realized.
+		
+		This turned out to be just a sidetrack, but at least it's got me started.
+	
+		11-02-2021 10:40 After consulting Christian's notes, I decided I wanted to understand how he was printing his rgb values.
+			This was important to me because I might get a clue on how to focus only on the blue as the assignment describes.
+			I get the following RGB arrays:
+			
+			pixels 8:  [218, 204, 191, 239, 206, 155, 239, 205]  len:  8
+			pixels 8:  [238, 207, 154, 237, 210, 164, 239, 212]  len:  8
+			pixels 8:  [239, 211, 169, 237, 210, 168, 235, 211]  len:  8
+			'7Ró'
+			
+			11:30: Search Term: "rgb blue least significant bit".
+			Result clicked: https://stackoverflow.com/questions/5751689/using-logical-bitshift-for-rgb-values/5751820
+			This page was very informative about "right-shifting".
+			Picking up the blue value in the RGB array is done by taking from index 2 (value and right-shifting with & 1)
+			
+			I got the bit list [1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0]
+			from the right-shifted blue pixels that should be the least significant bits.
+			
+		13:30 I clicked through related search terms starting from "bit array to ascii" and finally clicked https://stackoverflow.com/questions/10237926/convert-string-to-list-of-bits-and-viceversa
+			I installed the bitarray package and using the methods below I received the characters ÂövæN.®6:
+			
+				def bitlist_to_chars(bl):
+					bi = iter(bl)
+					bytes = zip(*(bi,) * 8)
+					shifts = (7, 6, 5, 4, 3, 2, 1, 0)
+					for byte in bytes:
+						yield chr(sum(bit << s for bit, s in zip(byte, shifts)))
+				
+				def bitlist_to_s(bl):
+					return ''.join(bitlist_to_chars(bl))
+					
+		17:47 Christian was finally available on Discord again and I was ready to give up.
+			He noted that the keeping of the logbook was the more important part of the assignment and I agreed to call it quits after instilling a headache trying to uncover the hidden message.
+			
+Summary of 11-02-2021:
+	I realize now that I tried to get the hidden message today by repeatedly trying the same few things in slightly different ways. Had I not been stubborn and tried to solve it using Python
+	I might have reached an answer by now.
+	Moreover I suspect maybe my order of operations was wrong. I was getting a bitlist out of the image and struggling to find a way to convert to bytes and look for a null byte after doing so. 
+	I was getting multiple errors because I tried to convert invalid strings to int and so on.
+	
+Reflection on Log Book activity:
+	Keeping a log book felt very unnatural and ultimately distracting to me. I was unable to keep to the recommended frequency of entries - I would have too many during the times when I wasn't struggling
+	and none at all at times when I was struggling.
+	The lesson to take away from it is that there should be a balance and the logbook can serve to remind me what I've already tried and keep important bits of information I wouldn't normally keep in my code.
+	The next time I try to keep a log book I will focus on those important bits of information instead of treating the log book like a surveillance log.
+	
